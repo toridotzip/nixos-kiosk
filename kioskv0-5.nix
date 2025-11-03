@@ -28,8 +28,24 @@
 
   # Configure keymap in X11
   services.xserver.xkb.layout = "de";
-  services.xserver.xkb.options = "nodeadkeys";
 
+  # Disable keys for shortcuts
+  services.keyd = {
+    enable = true;
+    keyboards = {
+      default = {
+        ids = [ "*" ];
+        settings = {
+          main = {
+            control = "noop";
+            esc = "noop";
+            alt = "noop";
+          };
+        };
+      };
+    };
+  };
+  
   # Enable sound.
   # services.pulseaudio.enable = true;
   # OR
@@ -89,10 +105,15 @@
   # Cage Setup
   systemd.services.cage-tty1.environment.XKB_DEFAULT_LAYOUT = "de";
 
+  systemd.services.cage-tty1.after = [
+    "network-online.target"
+    "systemd-resolved.service"
+  ];
+
   services.cage = {
     enable = true;
     user = "kiosk";
-    program = "${pkgs.firefox}/bin/firefox -kiosk -private-window https://tu.berlin";
+    program = "${pkgs.firefox}/bin/firefox -kiosk -private-window https://web01.iiab.local/moodle";
     # extraArguments = [ 
     #   "-s"
     # ];
@@ -111,6 +132,8 @@
       DisablePocket = true;
       DisableFirefoxAccounts = true;
       DisableFirefoxScreenshots = true;
+      OfferToSaveLogins = false;
+      PasswordManagerEnabled = false;
       #Access Restrictions
       BlockAboutConfig = true;
       BlockAboutProfiles = true;
@@ -172,4 +195,3 @@
         NIXOS_OZONE_WL = "1";
   };
 }
-
