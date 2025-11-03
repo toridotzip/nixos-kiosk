@@ -1,6 +1,7 @@
 # Edit this configuration file to define what should be installed on
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
+# Or ask Viktoria.
 
 { config, lib, pkgs, ... }:
 
@@ -59,14 +60,30 @@
   # Enable "silent boot"
   boot = {
     kernelParams = [ "quiet" "splash" "boot.shell_on_fail"];
-    consoleLogLevel = 0;
+    consoleLogLevel = 3;
     initrd.verbose = false;
     loader.timeout = pkgs.lib.mkForce 0;
     plymouth = {
       enable = true;
-      theme = "glow";
-    # logo  = pkgs.fetchurl { url = "https://tori.zip/assets/favicon/apple-touch-icon.png"; };
+      theme = "spinner_alt";
+      logo  = /etc/nixos/rsrc/TU_BERLIN_Logo.png;
+      themePackages = with pkgs; [
+        (adi1090x-plymouth-themes.override {
+          selected_themes = [ "spinner_alt" ];
+        })
+      ];
     };
+  };
+
+  # Short sleep during boot for splash animation
+  systemd.services.wait-for-animation = {
+    enable = true;
+    before = [ "plymouth-quit.service" "display-manager.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "/usr/bin/sleep 3";
+    };
+    wantedBy = [ "plymouth-start.service" ];
   };
 
   # Cage Setup
