@@ -6,19 +6,20 @@
 { config, lib, pkgs, ... }:
 
 {
+  # Import nixos base iso
   imports = [ 
       <nixpkgs/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix>
     ];
 
   # Network settings
-  networking.hostName = "kiosk"; # Define your hostname.
+  networking.hostName = "kiosk"; 
   networking.networkmanager.enable = true;  
-  networking.wireless.enable = pkgs.lib.mkForce false;
+  networking.wireless.enable = pkgs.lib.mkForce false; # Force disabled to avoid conflict
 
-  # Set your time zone.
+  # Set time zone
   time.timeZone = "Europe/Berlin";
 
-  # Select internationalisation properties.
+  # Select internationalisation properties
   i18n.defaultLocale = "de_DE.UTF-8";
   console = {
     earlySetup = true;
@@ -28,36 +29,8 @@
 
   # Configure keymap in X11
   services.xserver.xkb.layout = "de";
-
-  # Disable keys for shortcuts
-  services.keyd = {
-    enable = true;
-    keyboards = {
-      default = {
-        ids = [ "*" ];
-        settings = {
-          main = {
-            control = "noop";
-            esc = "noop";
-            alt = "noop";
-          };
-        };
-      };
-    };
-  };
   
-  # Enable sound.
-  # services.pulseaudio.enable = true;
-  # OR
-  # services.pipewire = {
-  #   enable = true;
-  #   pulse.enable = true;
-  # };
-
-  # Enable touchpad support (enabled default in most desktopManager).
-  services.libinput.enable = true;
-
-  # Define a user account. Don't forget to set a password with ‘passwd’.
+  # Define admin user
   users.users.blubb = {
     isNormalUser = true;
     extraGroups = [ "wheel" ]; # Enable ‘sudo’ for the user.
@@ -68,6 +41,7 @@
     ];
   };
  
+  # Define user for kiosk environment
   users.users.kiosk = {
     isNormalUser = true;
     packages = with pkgs; [];
@@ -79,6 +53,7 @@
     consoleLogLevel = 3;
     initrd.verbose = false;
     loader.timeout = pkgs.lib.mkForce 0;
+    # Small loading animation during boot and shutdown
     plymouth = {
       enable = true;
       theme = "spinner_alt";
@@ -91,35 +66,42 @@
     };
   };
 
-  # Short sleep during boot for splash animation
-  systemd.services.wait-for-animation = {
-    enable = true;
-    before = [ "plymouth-quit.service" "display-manager.service" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "/usr/bin/sleep 3";
-    };
-    wantedBy = [ "plymouth-start.service" ];
-  };
-
   # Cage Setup
+  # Keyboard layout within cage, just in case
   systemd.services.cage-tty1.environment.XKB_DEFAULT_LAYOUT = "de";
 
+  # Start after network connection (hopefully)
   systemd.services.cage-tty1.after = [
     "network-online.target"
     "systemd-resolved.service"
   ];
 
+  # Specify actual cage launch values
   services.cage = {
     enable = true;
     user = "kiosk";
     program = "${pkgs.firefox}/bin/firefox -kiosk -private-window https://web01.iiab.local/moodle";
-    # extraArguments = [ 
-    #   "-s"
-    # ];
+  };
+  
+  # Disable keys for shortcuts
+  services.keyd = {
+    enable = true;
+    keyboards = {
+      default = {
+        ids = [ "*" ];
+        settings = {
+          main = {
+            control = "noop";
+            esc = "noop";
+            alt = "noop";
+            tab = "noop";
+          };
+        };
+      };
+    };
   };
 
-  # Firefox program options
+  # Firefox program and policy options
   programs.firefox = {
     enable = true;
     languagePacks = [ "de" ];
@@ -146,7 +128,6 @@
   nixpkgs.config.allowUnfree = true;
 
   # List packages installed in system profile.
-  # You can use https://search.nixos.org/ to find more packages (and options).
   environment.systemPackages = with pkgs; [
     nano
     wget
@@ -155,38 +136,10 @@
     pkgs.firefox
   ];
 
-  # List services that you want to enable:
+  # Change ISO compression to speed up build times
+  isoImage.squashfsCompression = "gzip -Xcompression-level 1"
 
-  # Enable the OpenSSH daemon.
-  services.openssh.enable = true;
-
-  # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  # Or disable the firewall altogether.
-  # networking.firewall.enable = false;
-
-  # Copy the NixOS configuration file and link it from the resulting system
-  # (/run/current-system/configuration.nix). This is useful in case you
-  # accidentally delete configuration.nix.
-  system.copySystemConfiguration = true;
-
-  # This option defines the first version of NixOS you have installed on this particular machine,
-  # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.
-  #
-  # Most users should NEVER change this value after the initial install, for any reason,
-  # even if you've upgraded your system to a new NixOS release.
-  #
-  # This value does NOT affect the Nixpkgs version your packages and OS are pulled from,
-  # so changing it will NOT upgrade your system - see https://nixos.org/manual/nixos/stable/#sec-upgrading for how
-  # to actually do that.
-  #
-  # This value being lower than the current NixOS release does NOT mean your system is
-  # out of date, out of support, or vulnerable.
-  #
-  # Do NOT change this value unless you have manually inspected all the changes it would make to your configuration,
-  # and migrated your data accordingly.
-  #
+  # Do NOT change the following value.
   # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
   system.stateVersion = "25.05"; # Did you read the comment?
 
