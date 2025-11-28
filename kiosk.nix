@@ -57,7 +57,7 @@
     plymouth = {
       enable = true;
       theme = "spinner_alt";
-      logo  = /etc/nixos/rsrc/TU_BERLIN_Logo.png;
+      # logo  = /etc/nixos/rsrc/TU_BERLIN_Logo.png;
       themePackages = with pkgs; [
         (adi1090x-plymouth-themes.override {
           selected_themes = [ "spinner_alt" ];
@@ -95,6 +95,7 @@
             esc = "noop";
             alt = "noop";
             tab = "noop";
+            f6 = "noop";
           };
         };
       };
@@ -137,7 +138,7 @@
   ];
 
   # Change ISO compression to speed up build times
-  isoImage.squashfsCompression = "gzip -Xcompression-level 1"
+  isoImage.squashfsCompression = "gzip -Xcompression-level 1";
 
   # Do NOT change the following value.
   # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
